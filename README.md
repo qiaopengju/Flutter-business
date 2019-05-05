@@ -15,4 +15,8 @@ For help getting started with Flutter, view our
 [online documentation](https://flutter.io/docs), which offers tutorials, 
 samples, guidance on mobile development, and a full API reference.
 
-* 用Android Studio打开该项目后，需要打开pubspec.yaml文件，点击get packages获取开发依赖。
+* 在Android Studio中选择Setting->Plugins下载Flutter插件
+* 下载Flutter SDK
+* 添加Flutter SDK至Android Studio path
+* 用Android Studio打开该项目后，需要打开pubspec.yaml文件，点击get packages获取开发依赖
+

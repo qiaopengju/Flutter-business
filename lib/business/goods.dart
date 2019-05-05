@@ -252,11 +252,9 @@ class GoodsListBody extends StatelessWidget{
   List<Widget> _listWidget;
 
   _getGoodsList(){
-    /*goodsList = [{'name': 'kkyou', 'model': 180},
-      {'name': 'simone', 'model': 160},
-      {'name': 'simone', 'model': 160},
-    ];*/
-    dbGetGoodsList();
+    goodsList = [{'name': 'shoes', 'model': 180},
+    ];
+    //dbGetGoodsList();
 
     _listWidget = goodsList == null ? null : new List<Widget>.generate(goodsList.length,
       (int index){
