@@ -28,6 +28,17 @@ class _StorehouseState extends State<Storehouse>{
           ),
         ),
         actions: <Widget>[
+          FlatButton(
+            child: Row(
+              children: <Widget>[
+                Text(_searchText == null ? 'All goods': 'Search:  ' + _searchText, style: TextStyle(color: Colors.grey[300]),),
+                _searchText == null ? Column() : Icon(Icons.close, size: 12, color: Colors.grey[300],),
+              ],
+            ),
+            onPressed: (){
+              setState(() { _searchText = null; });
+            },
+          ),
           IconButton(
             tooltip: 'Search',
             icon: const Icon(Icons.search),

@@ -5,7 +5,7 @@ import 'database.dart';
 import 'function.dart';
 
 int _selectedIndex = 0;
-String _searchText, _lastSearchText;
+String _searchText;
 
 class Replenish extends StatefulWidget{
   @override
@@ -28,6 +28,41 @@ class _ReplenishState extends State<Replenish>{
             color: mainTheme.barText,
           ),
         ),
+        actions: <Widget>[
+          _selectedIndex == 0 ? Column() :
+          FlatButton(
+            padding: EdgeInsets.all(0),
+            onPressed:() {
+              showDatePicker(context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(DateTime.now().year - 5),
+                  lastDate: DateTime(DateTime.now().year + 5)
+              ).then<void>((DateTime value) {
+                _searchText = value.year.toString() + '-' +
+                    value.month.toString() + '-' +
+                    value.day.toString();
+                setState(() {});
+              });
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                FlatButton(
+                  child: Row(
+                    children: <Widget>[
+                      Text(_searchText == null ? 'All times': _searchText, style: TextStyle(color: Colors.grey[300]),),
+                     _searchText == null ? Column() : Icon(Icons.close, size: 12, color: Colors.grey[300],),
+                    ],
+                  ),
+                  onPressed: (){
+                    setState(() { _searchText = null; });
+                  },
+                ),
+                FlatButton(child: Icon(Icons.search, color: Colors.white,)),
+              ],
+            ),
+          ),
+        ],
         //centerTitle: true,
         backgroundColor: mainTheme.primarySwatch,
         elevation: 0,
