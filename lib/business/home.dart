@@ -1,3 +1,4 @@
+/*用于存放主页图标信息*/
 import 'package:flutter/material.dart';
 import 'theme.dart';
 
@@ -85,7 +86,7 @@ class FuncIcon{
   IconButton icon;
 }
 
-class FuncIconList{
+class FuncIconList{ //生成图标列表
   List<Column> funcIcon = new List<Column>.generate(/*funIconCards.length*/6,
           (int index){
         FuncIconCards cards = new FuncIconCards();

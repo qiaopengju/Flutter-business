@@ -1,7 +1,9 @@
+/*所有数据库操作*/
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
+/*建表信息*/
 String createTableGoods = '''
   create table goods(
     name varchar(20),
@@ -44,37 +46,37 @@ String createTableSetting = '''
     alertNum interger,
     primary key(darkTheme));
 ''';
-DbManager dbManager = new DbManager();
-List<Map<String, dynamic>> goodsList;
-List<Map<String, dynamic>> goodsStore;
-List<Map<String, dynamic>> replenishList;
-List<Map<String, dynamic>> sellList;
-List<Map<String, dynamic>> alertList;
-Map<String, dynamic> financeMap = new Map<String, dynamic>();
-bool darkTheme;
-int alertNum;
+DbManager dbManager = new DbManager(); //数据库管理类
+List<Map<String, dynamic>> goodsList; //商品列表
+List<Map<String, dynamic>> goodsStore;  //库存列表
+List<Map<String, dynamic>> replenishList; //进货记录列表
+List<Map<String, dynamic>> sellList;  //销售记录列表
+List<Map<String, dynamic>> alertList; //缺货列表
+Map<String, dynamic> financeMap = new Map<String,dynamic>(); //财政信息map
+bool darkTheme; //暗色主题
+int alertNum; //库存低于多少时报警
 
 class DbManager{
   DbManager();
 
-  static final String _databaseName = "business.db";
-  static final int _databaseVersion = 1;
-  static Database _database;
-  Future<Database> get database async{
-    if (_database != null) return _database;
-    _database = await _initDatabase();
+  static final String _databaseName = "business.db"; //数据库文件
+  static final int _databaseVersion = 1; //数据库版本
+  static Database _database; //静态申明数据库，临时使用
+  Future<Database> get database async{ //利用getter异步获取数据库database
+    if (_database != null) return _database; //如果数据库已存在，则返回
+    _database = await _initDatabase(); //否则，异步初始化数据库
     return _database;
   }
 
-  _initDatabase() async{
-    var documentsDirectory = await getApplicationDocumentsDirectory();
-    String path = join(documentsDirectory.path, _databaseName);
+  _initDatabase() async{ //生成数据库
+    var documentsDirectory = await getApplicationDocumentsDirectory(); //获取应用目录
+    String path = join(documentsDirectory.path, _databaseName); //添加数据库文件
     //deleteDatabase(path);
-    return await openDatabase(path, version: _databaseVersion,
-        onCreate: _onCreate);
+    return await openDatabase(path, version: _databaseVersion, //建立数据库
+        onCreate: _onCreate); //Create时调用
   }
 
-  Future _onCreate(Database db, int version) async{
+  Future _onCreate(Database db, int version) async{ //建立数据库时建表
     await db.execute(createTableGoods);
     await db.execute(createTableReplenish);
     await db.execute(createTableSell);
@@ -82,17 +84,20 @@ class DbManager{
     await db.execute(createTableSetting);
   }
 
+  /*插入新的信息入数据库*/
   Future<int> insertDb(String table, Map<String, dynamic> row) async{
     Database _db = await database;
     return await _db.insert(table, row);
   }
 
+  /*更新数据库信息*/
   Future<int> update(String table, Map<String, dynamic> values,
       String where) async{
     Database _db = await database;
     return await _db.update(table, values, where: where);
   }
 
+  /*数据库查询, where 可选*/
   Future<List<Map<String, dynamic>>> query(String table,
       [String where]) async{
     Database _db = await database;
@@ -103,60 +108,63 @@ class DbManager{
       return await _db.query(table);
   }
 
+  /*较为复杂的query操作*/
   Future<List<Map<String, dynamic>>> complexQuery(String table,
   {String where, List<String> columns, String groupBy}) async{
     Database _db = await database;
     return await _db.query(table, columns: columns, where: where, groupBy: groupBy);
   }
 
+  /*数据库删除*/
   Future<int> delete(String table, String where) async{
     Database _db = await database;
     return await _db.delete(table, where: where);
   }
 }
 
-dbGetGoodsList([String _searchText]) async{
-  if (_searchText != null){
+dbGetGoodsList([String _searchText]) async{ //获取商品列表
+  if (_searchText != null){ //根据搜索信息查询
     goodsList = await dbManager.query('goods', 'name LIKE \'%$_searchText%\'');
-  } else{
+  } else{ //查询所有商品
     goodsList = await dbManager.query('goods');
   }
 }
 
-dbAddGoods(String _name, String _model) async{
+dbAddGoods(String _name, String _model) async{  //添加商品
   return await dbManager.insertDb('goods', {'name': _name, 'model': _model});
 }
 
-dbAddReplenish(String _name, String _model, int _num, double _price,
+dbAddReplenish(String _name, String _model, int _num, double _price, //添加进货记录
     String _time) async{
   return await dbManager.insertDb('replenish', {'name': _name, 'model': _model,
     'num': _num, 'price': _price, 'time': _time, 'finished': 0});
 }
 
-dbGetReplenishList([String _searchTime]) async{
-  if (_searchTime != null){
+dbGetReplenishList([String _searchTime]) async{ //获取进货记录
+  if (_searchTime != null){ //根据进货时间查询
     replenishList = await dbManager.query('replenish', 'time = \'$_searchTime\'');
-  } else{
+  } else{ //查询所有进货记录
     replenishList = await dbManager.query('replenish');
   }
 }
 
-dbReplenishFinished(String _name, String _model, String _time, int _num) async{
+dbReplenishFinished(String _name, String _model, String _time, int _num) async{ //进货完成
   dbManager.update('replenish', {'finished': 1}, 'name = \'$_name\' '
       'AND model = \'$_model\' AND time = \'$_time\'');
   String where = 'name = \'$_name\' AND model = \'$_model\'';
-  List<Map<String, dynamic>> tmpList = await dbManager.query('storehouse', where);
+  List<Map<String, dynamic>> tmpList = await dbManager.query('storehouse', where); //判断库存中是否有对应商品
 
-  if (tmpList.length == 0) {
+  /*当进货完成时，要增加库存中的商品*/
+  if (tmpList.length == 0) { //如果表中没有该商品，在库存中插入
     dbManager.insertDb('storehouse', {'name': _name, 'model': _model, 'num': _num});
-  } else{
+  } else{ //否则，更新库存
     int tmpNum = tmpList[0]['num'];
     dbManager.update('storehouse', {'num': tmpNum + _num}, where);
   }
-  dbGetStoreAlerm();
+  dbGetStoreAlerm(); //重新获取库存预警信息
 }
 
-dbGetGoodsStore([String _searchText]) async{
+dbGetGoodsStore([String _searchText]) async{ //获取库存信息
   if (_searchText != null){
     goodsStore = await dbManager.query('storehouse', 'name LIKE \'%$_searchText%\'');
   } else{
@@ -164,15 +172,20 @@ dbGetGoodsStore([String _searchText]) async{
   }
 }
 
-dbGetStoreAlerm() async{
+dbGetStoreAlerm() async{ //库存预警
   alertList = await dbManager.query('storehouse', 'num < $alertNum');
 }
 
-dbAddSell(String _name, String _model, int _num, double _price, String _time) async{
+dbAddSell(String _name, String _model, int _num, double _price, String _time) async{ //增加销售记录
   String storeWhere = 'name = \'$_name\' AND model = \'$_model\'';
   String sellWhere = 'name = \'$_name\' AND model = \'$_model\' AND time = \'$_time\'';
   List<Map<String, dynamic>> tmpStoreList = await dbManager.query('storehouse', storeWhere);
   List<Map<String, dynamic>> tmpSellList = await dbManager.query('sell_record', sellWhere);
+
+  /*满足如下条件时，新增销售信息
+  1. 库存中有此商品
+  2. 库存数量大于销售数量
+  */
 
   if (tmpStoreList.length == 0) { //如果为由库存，返回false
     return false;
@@ -195,7 +208,7 @@ dbAddSell(String _name, String _model, int _num, double _price, String _time) as
   }
 }
 
-dbGetSellList([String _searchTime]) async{
+dbGetSellList([String _searchTime]) async{ //获取销售列表
   if (_searchTime != null){
     sellList = await dbManager.query('sell_record', 'time = \'$_searchTime\'');
   } else{
@@ -203,7 +216,7 @@ dbGetSellList([String _searchTime]) async{
   }
 }
 
-dbGetFinanceData(int _date, int _month, int _year) async{
+dbGetFinanceData(int _date, int _month, int _year) async{ //获取财务管理表
   List<Map<String, dynamic>> dateCount = await dbManager.complexQuery('sell_record',
     where: 'time = \'$_year-$_month-$_date\'',
     groupBy: 'time',
@@ -268,7 +281,7 @@ dbGetFinanceData(int _date, int _month, int _year) async{
   }
 }
 
-dbSetTheme(bool darkTheme) async{
+dbSetTheme(bool darkTheme) async{ //设置主题
   var tmpSetting =  await dbManager.query('setting');
   if (tmpSetting.length != 0){
     await dbManager.update('setting', {'darkTheme': darkTheme ? 1 : 0}, 'single = 0');
@@ -278,7 +291,7 @@ dbSetTheme(bool darkTheme) async{
   }
 }
 
-dbSetAlertNum(int alertNum) async{
+dbSetAlertNum(int alertNum) async{ //设置预警数量
   var tmpSetting =  await dbManager.query('setting');
   if (tmpSetting.length != 0) {
     await dbManager.update('setting', {'alertNum': alertNum}, 'single = 0');
@@ -288,7 +301,7 @@ dbSetAlertNum(int alertNum) async{
   }
 }
 
-dbGetSetting() async{
+dbGetSetting() async{ //获取设置信息，若没有设置信息，则加入默认值
   List<Map<String, dynamic>> tmpSetting =  await dbManager.query('setting');
   if (tmpSetting.length == 0){
     await dbManager.insertDb('setting', {'single': 0,

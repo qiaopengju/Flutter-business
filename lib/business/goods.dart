@@ -1,3 +1,4 @@
+/*goods添加与列举*/
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -5,7 +6,7 @@ import 'theme.dart';
 import 'database.dart';
 import 'function.dart';
 
-String _searchText, _lastSearchText;
+String _searchText, _lastSearchText; //搜索信息
 
 class Goods extends StatefulWidget{
   @override
@@ -91,12 +92,12 @@ class AddGoodsBody extends StatefulWidget{
 
 class _AddGoodsBodyState extends State<AddGoodsBody>{
   //bool _shouldAdd;
-  String goodsName, goodsModel;
-  var image;
-  TextEditingController nameCtrl = new TextEditingController(),
-      modelCtrl = new TextEditingController();
-  GlobalKey newGoodsKey = new GlobalKey<FormState>();
-  FocusNode nameNode = new FocusNode(), modelNode = new FocusNode();
+  String goodsName, goodsModel; //输入表单信息，商品名称、型号
+  var image; //图片文件，为FILE类型
+  TextEditingController nameCtrl = new TextEditingController(); //TextForm控制
+  TextEditingController modelCtrl = new TextEditingController();
+  GlobalKey newGoodsKey = new GlobalKey<FormState>(); //获取表单状态
+  FocusNode nameNode = new FocusNode(), modelNode = new FocusNode(); //获取焦点
   Container _choosePhotoWidget = new Container(
     padding: EdgeInsets.all(30),
     decoration: BoxDecoration(color: Colors.grey[300]),
@@ -110,30 +111,29 @@ class _AddGoodsBodyState extends State<AddGoodsBody>{
     ),
   );
 
-  _submitForm() async{
+  _submitForm() async{ //提交表单
     //_shouldAdd = false;
-    if ((newGoodsKey.currentState as FormState).validate()){
-      /*await _alert();
-      if (_shouldAdd) {*/
-        goodsName = nameCtrl.text;
-        goodsModel = modelCtrl.text;
-        nameNode.unfocus();
-        modelNode.unfocus();
-        //sql
-        var _tmpGoods = await dbManager.query('goods', 'name = \'$goodsName\' AND model = \'$goodsModel\'');
-        if (_tmpGoods.length != 0){
-          alert(context, 'Add failed!');
+    if ((newGoodsKey.currentState as FormState).validate()){ //如果表单验证成功
+      /*给相关变量赋予表单的值*/
+      goodsName = nameCtrl.text;
+      goodsModel = modelCtrl.text;
+      nameNode.unfocus();
+      modelNode.unfocus();
+      //sql
+      /*先询问是否有该商品，如果商品已存在，则添加失败*/
+      var _tmpGoods = await dbManager.query('goods', 'name = \'$goodsName\' AND model = \'$goodsModel\'');
+      if (_tmpGoods.length != 0){
+        alert(context, 'Add failed!');
+      } else { //数据库中无该商品，可添加
+        if (dbAddGoods(goodsName, goodsModel) != null) {
+          alert(context, 'Add successfully !');
         } else {
-          if (dbAddGoods(goodsName, goodsModel) != null) {
-            alert(context, 'Add successfully !');
-          } else {
-            alert(context, 'Add failed!');
-          }
+          alert(context, 'Add failed!');
         }
-      //}
+      }
     }
   }
-  _alert(){
+  _alert(){ //弹窗
     showDialog(
       context: context,
       builder: (BuildContext context){
@@ -160,7 +160,7 @@ class _AddGoodsBodyState extends State<AddGoodsBody>{
     );
   }
 
-  Future _getImage() async{
+  Future _getImage() async{ //调用imagePicker异步获取相册中的图片
     var _image = await ImagePicker.pickImage(source: ImageSource.gallery);
     setState(() {
       image = _image;
@@ -174,8 +174,8 @@ class _AddGoodsBodyState extends State<AddGoodsBody>{
       decoration: BoxDecoration(
         //color: mainTheme.pageColor,
       ),
-      child: SingleChildScrollView(
-        child: Form(
+      child: SingleChildScrollView( //滚动列表，防止越界出现显示错误
+        child: Form( //表单
           key: newGoodsKey,
           autovalidate: true,
           child: Column(
@@ -197,7 +197,7 @@ class _AddGoodsBodyState extends State<AddGoodsBody>{
                  hintText: 'Goods\'s name',
                  prefixIcon: Icon(Icons.style),
                ),
-               validator: (v){
+               validator: (v){ //检测表单输入
                  return v.trim().length > 0 ? null : '  Empty input';
                },
                /*onChanged: (v){
@@ -235,7 +235,7 @@ class _AddGoodsBodyState extends State<AddGoodsBody>{
   }
 }
 
-class GoodsList extends StatefulWidget{
+class GoodsList extends StatefulWidget{ //表单列表
   @override
   _GoodsListState createState() => new _GoodsListState();
 }
@@ -250,6 +250,7 @@ class _GoodsListState extends State<GoodsList>{
         title: Text('Goods List',
           style: TextStyle(fontSize: 18),),
         actions: <Widget>[
+          /*搜索框，通过name匹配商品，将搜索框中的值赋予_searchText*/
           IconButton(
             tooltip: 'Search',
             icon: const Icon(Icons.search),
@@ -283,7 +284,7 @@ class GoodsListBody extends StatefulWidget{
 class GoodsListBodyState extends State<GoodsListBody>{
   List<Widget> _listWidget;
 
-  _getGoodsList() async{
+  _getGoodsList() async{ //异步调用数据库获取商品列表
     _setWidget();
 
     if (_searchText == null) {
@@ -296,7 +297,7 @@ class GoodsListBodyState extends State<GoodsListBody>{
     });
   }
 
-  _setWidget() {
+  _setWidget() { //生成列表Widget
     _listWidget = goodsList == null ? null : new List<Widget>.generate(goodsList.length,
       (int index){
         return Card(

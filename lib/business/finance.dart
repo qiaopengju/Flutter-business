@@ -1,3 +1,4 @@
+/*财务管理*/
 import 'package:flutter/material.dart';
 
 import 'theme.dart';
@@ -56,12 +57,12 @@ class _PageBodyState extends State<_PageBody>{
   }
 
 
-  _initialFinance(int date, int month, int year) async{
+  _initialFinance(int date, int month, int year) async{ //设置并从数据库异步获取财务信息
     _date = date;
     _month = month;
     _year = year;
 
-    await dbGetFinanceData(_date, _month, _year);
+    await dbGetFinanceData(_date, _month, _year); //从数据库异步获取财务信息
     print(financeMap);
 
     _dateDealTimes = financeMap['dateDealTimes'];
@@ -72,12 +73,12 @@ class _PageBodyState extends State<_PageBody>{
     _yearExpend = financeMap['yearExpend'];
 
     setState(() {
-      _setWidget();
+      _setWidget(); //设置财务信息Widget
     });
   }
 
   _setWidget(){
-    dayFinanceWidget = new Card(
+    dayFinanceWidget = new Card( //日财务统计Widget
       margin: EdgeInsets.all(10),
       elevation: 5,
       child: Padding(
@@ -167,7 +168,7 @@ class _PageBodyState extends State<_PageBody>{
         ),
       ),
     );
-    monthFinanceWidget = new Card(
+    monthFinanceWidget = new Card( //月财务统计Widget
       margin: EdgeInsets.all(10),
       elevation: 5,
       child: Padding(
@@ -250,7 +251,7 @@ class _PageBodyState extends State<_PageBody>{
         ),
       ),
     );
-    yearFinanceWidget = new Card(
+    yearFinanceWidget = new Card( //年财务统计Widget
       margin: EdgeInsets.all(10),
       elevation: 5,
       child: Padding(

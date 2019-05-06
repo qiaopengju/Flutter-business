@@ -1,11 +1,12 @@
+/*进货管理，包括进货记录添加，进货记录查询*/
 import 'package:flutter/material.dart';
 
 import 'theme.dart';
 import 'database.dart';
 import 'function.dart';
 
-int _selectedIndex = 0;
-String _searchText;
+int _selectedIndex = 0; //页面号
+String _searchText; //进货记录查询String
 
 class Replenish extends StatefulWidget{
   @override
@@ -28,6 +29,7 @@ class _ReplenishState extends State<Replenish>{
             color: mainTheme.barText,
           ),
         ),
+        /*设置一个time picker用于获取搜索时间*/
         actions: <Widget>[
           _selectedIndex == 0 ? Column() :
           FlatButton(
@@ -67,9 +69,9 @@ class _ReplenishState extends State<Replenish>{
         backgroundColor: mainTheme.primarySwatch,
         elevation: 0,
       ),
-      body: _selectedIndex == 0 ? _PageAdd() : _PageRecord(),
-      backgroundColor: mainTheme.primarySwatch,
-      bottomNavigationBar: BottomNavigationBar(
+      body: _selectedIndex == 0 ? _PageAdd() : _PageRecord(), //根据不同的页面号加载不同的页面
+      backgroundColor: mainTheme.primarySwatch, //主题颜色
+      bottomNavigationBar: BottomNavigationBar( //底部菜单
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.add_circle), title: Text('new record')),
@@ -79,7 +81,7 @@ class _ReplenishState extends State<Replenish>{
         currentIndex: _selectedIndex,
         onTap: (index){
           setState(() {
-            _selectedIndex = index;
+            _selectedIndex = index; //更换页面索引
           });
         },
       )
@@ -87,26 +89,26 @@ class _ReplenishState extends State<Replenish>{
   }
 }
 
-class _PageRecord extends StatefulWidget{
+class _PageRecord extends StatefulWidget{ //进货记录列表
   @override
   _PageRecordState createState() => new _PageRecordState();
 }
 
 class _PageRecordState extends State<_PageRecord>{
-  List<Widget> _replenishWidgetList;
-  Color _usefulColor = Colors.blue;
-  Color _uselessColor = Colors.grey;
+  List<Widget> _replenishWidgetList; //进货记录Widget
+  Color _usefulColor = Colors.blue; //正在进货的颜色
+  Color _uselessColor = Colors.grey; //进货完成的颜色
 
-  _getReplenishList() async{
+  _getReplenishList() async{ //异步从数据库获取进货记录
     _setWidget();
-    if (_searchText == null) {
+    if (_searchText == null) { //如果有搜索项，则按时间搜索进货信息
       await dbGetReplenishList();
     } else{
       await dbGetReplenishList(_searchText);
     }
 
     setState(() {
-      _setWidget();
+      _setWidget(); //设置进货记录列表Widget
     });
   }
 
@@ -235,25 +237,27 @@ class _PageRecordState extends State<_PageRecord>{
   }
 }
 
-class _PageAdd extends StatefulWidget{
+class _PageAdd extends StatefulWidget{ //新增进货记录
   @override
   _PageAddState createState() => new _PageAddState();
 }
 
 class _PageAddState extends State<_PageAdd>{
   //bool _shouldAdd = false;
-  GlobalKey _fomrKey = new GlobalKey<FormState>();
-  TextEditingController _nameCtrl = new TextEditingController(),
+  GlobalKey _fomrKey = new GlobalKey<FormState>(); //获取表单状态
+  TextEditingController _nameCtrl = new TextEditingController(), //文本框控制
     _modelCtrl = new TextEditingController(),
     _numCtrl = new TextEditingController(),
     _priceCtrl = new TextEditingController(),
     _timeCtrl = new TextEditingController();
+  /*输入的商品信息*/
   String _name, _model, _time;
   int _count;
   double _price;
 
-  _submitForm () async{
-    if ((_fomrKey.currentState as FormState).validate()){
+  _submitForm () async{ //异步提交表单至数据库
+    if ((_fomrKey.currentState as FormState).validate()){ //检测表单正确
+      /*将表单赋值*/
       _name = _nameCtrl.text;
       _model = _modelCtrl.text;
       _count = int.parse(_numCtrl.text);
@@ -273,7 +277,7 @@ class _PageAddState extends State<_PageAdd>{
             alert(context, 'Add failed!');
           }
         }
-      } else{
+      } else{ //未选择时间，报错
         alert(context, 'Please select time!');
       }
     }

@@ -1,6 +1,7 @@
+/*theme相关信息*/
 import 'package:flutter/material.dart';
 
-enum ThemeColor{white, black, blue}
+enum ThemeColor{white, black, blue} //主题枚举
 MainTheme mainTheme;
 
 class MainTheme{

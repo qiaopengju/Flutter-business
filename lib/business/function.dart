@@ -1,6 +1,7 @@
+/*实现的一些小功能*/
 import 'package:flutter/material.dart';
 
-alert(BuildContext context, String text){
+alert(BuildContext context, String text){ //弹窗显示文字
   showDialog(
       context: context,
       builder: (BuildContext context){
@@ -29,7 +30,7 @@ alert(BuildContext context, String text){
   );
 }
 
-class SearchStringDelegate extends SearchDelegate<String> {
+class SearchStringDelegate extends SearchDelegate<String> { //搜索Delegate，返回Widget和搜索值
   @override
   Widget buildLeading(BuildContext context) {
     return IconButton(

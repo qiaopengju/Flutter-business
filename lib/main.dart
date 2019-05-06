@@ -10,7 +10,7 @@ import 'business/finance.dart';
 import 'business/database.dart';
 import 'business/function.dart';
 
-final Map<String, WidgetBuilder> routeManager = {
+final Map<String, WidgetBuilder> routeManager = { //路由管理
   'home': (context) => HomePage(),
   'replenish': (context) => Replenish(),
   'sell': (context) => Sell(),
@@ -20,9 +20,10 @@ final Map<String, WidgetBuilder> routeManager = {
   'addGoods': (context) => AddGoodsPage(),
   'goodsList': (context) => GoodsList(),
 };
-GlobalKey<ScaffoldState> _mainScaffoldKey = new GlobalKey();
+GlobalKey<ScaffoldState> _mainScaffoldKey = new GlobalKey();  //用于管理主界面Scaffold状态
 
 void main() async{
+  /* 获取数据库信息 */
   await dbGetGoodsList();
   await dbGetReplenishList();
   await dbGetSellList();
@@ -34,7 +35,7 @@ void main() async{
 
   //await dbGetFinanceData(DateTime.now().day, DateTime.now().month, DateTime.now().year);
 
-  runApp(Business());
+  runApp(Business()); //运行app
 }
 
 class Business extends StatefulWidget{
@@ -59,13 +60,16 @@ class HomePage extends StatefulWidget{
 }
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin{
+  /*用于控制缺货预警图标颜色动画*/
   Animation<double> animation;
   AnimationController controller;
 
+  /*初始化*/
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    /*初始化动画控制*/
     controller = new AnimationController(vsync: this,
         duration: const Duration(milliseconds: 3000));
     animation = new Tween(begin: 0.0, end: 255.0).animate(controller)
@@ -74,6 +78,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       });
     controller.forward();
 
+    /*设置监听，循环动画*/
     animation.addStatusListener((status) {
       if (status == AnimationStatus.completed){
         controller.reverse();
@@ -88,7 +93,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return Scaffold(
       key: _mainScaffoldKey,
       appBar: new AppBar(
-        leading: IconButton(icon: Icon(Icons.donut_large,
+        leading: IconButton(icon: Icon(Icons.donut_large, //leading: 预警图标
           color: alertList.length == 0 ? mainTheme.barText :
             Color.fromARGB(255, 255, animation.value.floor(), animation.value.floor()), size: 35,),
           onPressed: (){
@@ -113,7 +118,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         backgroundColor: mainTheme.primarySwatch,
         elevation: 0,
       ),
-      drawer: GestureDetector(
+      drawer: GestureDetector( //监听gesture
         onTapCancel: () {
           setState(() {
             themeButtonPressed();
@@ -219,7 +224,8 @@ class HomeBody extends StatelessWidget{
     );
   }
 }
-class _MainDrawer extends StatefulWidget{
+
+class _MainDrawer extends StatefulWidget{ //Drawer
   @override
   _MainDrawerState createState() => _MainDrawerState();
 }
@@ -234,12 +240,12 @@ class _MainDrawerState extends State<_MainDrawer> {
           leading: Icon(Icons.settings),
           backgroundColor: mainTheme.primarySwatch,
         ),
-        body: Form(
+        body: Form( //表单
           child: Column(
             children: <Widget>[
               ListTile(
                 title: Text('Dark theme :', style: TextStyle(fontSize: 16.5, color: Colors.grey[600]),),
-                trailing: Switch(value: darkTheme, onChanged: (v){
+                trailing: Switch(value: darkTheme, onChanged: (v){ //switch开关控制是否为深色主题
                   darkTheme = v;
                 }),
               ),
