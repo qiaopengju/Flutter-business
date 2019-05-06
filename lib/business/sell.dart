@@ -5,6 +5,7 @@ import 'database.dart';
 import 'function.dart';
 
 int _selectedIndex = 0;
+String _searchText, _lastSearchText;
 
 class Sell extends StatefulWidget{
   @override
@@ -59,12 +60,20 @@ class _PageRecord extends StatefulWidget{
 class _PageRecordState extends State<_PageRecord>{
   List<Widget> _sellWidgetList;
 
-  _getSellList(){
-    sellList = [
-      {'name': 'book', 'model': 'matrix', 'num': 12, 'price': 21,
-        'time': '2019-05-01'},
-    ];
+  _getSellList() async{
+    _setWidget();
 
+    if (_searchText == null) {
+      await dbGetSellList();
+    } else{
+      await dbGetSellList(_searchText);
+    }
+    setState(() {
+      _setWidget();
+    });
+  }
+
+  _setWidget(){
     _sellWidgetList = sellList == null ? null : new List<Widget>.generate(sellList.length,
             (index){
           return Card(
@@ -129,7 +138,7 @@ class _PageRecordState extends State<_PageRecord>{
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.max,
-          children: sellList != null ? _sellWidgetList : <Widget>[
+          children: sellList != null && sellList.length != 0? _sellWidgetList : <Widget>[
             Column(
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -166,16 +175,29 @@ class _PageAddState extends State<_PageAdd>{
 
   _submitForm () async{
     if ((_fomrKey.currentState as FormState).validate()){
-      /*await _alert();
-      if (_shouldAdd) {*/
-        _name = _nameCtrl.text;
-        _model = _modelCtrl.text;
-        _time = _timeCtrl.text;
-        _count = int.parse(_numCtrl.text);
-        _price = double.parse(_priceCtrl.text);
-        //sql
-        alert(context, 'Add successfully !');
-      //}
+      _name = _nameCtrl.text;
+      _model = _modelCtrl.text;
+      _count = int.parse(_numCtrl.text);
+      _price = double.parse(_priceCtrl.text);
+      //sql
+      if (_time != null){
+        var _tmpSell = await dbManager.query('sell_record', 'name = \'$_name\' AND '
+            'model = \'$_model\' AND time = \'$_time\'');
+        var _tmpGoods = await dbManager.query('storehouse', 'name = \'$_name\' AND model = \'$_model\'');
+
+        if (_tmpSell.length != 0 || _tmpGoods.length == 0
+          || _tmpGoods[0]['num'] < _count){ //如果销售记录已存在或不存在该商品，报错
+          alert(context, 'Add failed!');
+        } else { //如果销售记录不存在，添加
+          if (dbAddSell(_name, _model, _count, _price, _time) != false) {
+            alert(context, 'Add successfully !');
+          } else {
+            alert(context, 'Add failed!');
+          }
+        }
+      } else{
+        alert(context, 'Please select time!');
+      }
     }
   }
   _alert(){
@@ -282,17 +304,15 @@ class _PageAddState extends State<_PageAdd>{
                       FlatButton(
                         padding: EdgeInsets.all(0),
                         onPressed:() {
-                          setState(() {
-                            showDatePicker(context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime(DateTime.now().year - 5),
-                                lastDate: DateTime(DateTime.now().year + 5)
-                            ).then<void>((DateTime value){
-                              _time = value.year.toString() + '-' +
-                                  value.month.toString() + '-' +
-                                  value.day.toString();
-                            });
-                            print(_time);
+                          showDatePicker(context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(DateTime.now().year - 5),
+                              lastDate: DateTime(DateTime.now().year + 5)
+                          ).then<void>((DateTime value){
+                            _time = value.year.toString() + '-' +
+                                value.month.toString() + '-' +
+                                value.day.toString();
+                            setState(() {});
                           });
                         },
                         child: TextFormField(

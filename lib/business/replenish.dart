@@ -5,6 +5,7 @@ import 'database.dart';
 import 'function.dart';
 
 int _selectedIndex = 0;
+String _searchText, _lastSearchText;
 
 class Replenish extends StatefulWidget{
   @override
@@ -43,7 +44,7 @@ class _ReplenishState extends State<Replenish>{
         currentIndex: _selectedIndex,
         onTap: (index){
           setState(() {
-          _selectedIndex = index;
+            _selectedIndex = index;
           });
         },
       )
@@ -61,82 +62,103 @@ class _PageRecordState extends State<_PageRecord>{
   Color _usefulColor = Colors.blue;
   Color _uselessColor = Colors.grey;
 
-  _getReplenishList(){
-    /*replenishList = [
-      {'name': 'book', 'model': 'matrix', 'num': 12, 'price': 12.5,
-        'time': '2019-05-01', 'finished': false},
-    ];*/
+  _getReplenishList() async{
+    _setWidget();
+    if (_searchText == null) {
+      await dbGetReplenishList();
+    } else{
+      await dbGetReplenishList(_searchText);
+    }
 
+    setState(() {
+      _setWidget();
+    });
+  }
+
+  _setWidget(){
     _replenishWidgetList = replenishList == null ? null : new List<Widget>.generate(replenishList.length,
       (index){
-        return Card(
-          child: Stack(
-            children: <Widget>[
-              Stack(
-                children: <Widget>[
-                  !replenishList[index]['finished'] ? Text(''):
-                  Positioned(
-                    top: 110,
-                    left: 270,
-                    child: Transform(
-                      alignment: Alignment.topRight,
-                      transform: new Matrix4.skewY(-0.3),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(width: 5, style: BorderStyle.solid, color: Colors.grey[300]),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Column(
-                          children: <Widget>[
-                            Text('Finished'),
-                          ],
+        return GestureDetector(
+          onTap: (){
+            if (replenishList[index]['finished'] == 0) {
+              print(replenishList[index]);
+              dbReplenishFinished(replenishList[index]['name'],
+                replenishList[index]['model'], replenishList[index]['time'],
+                replenishList[index]['num']);
+              dbGetReplenishList();
+              setState(() {});
+            }
+          },
+          child: Card(
+            child: Stack(
+              children: <Widget>[
+                Stack(
+                  children: <Widget>[
+                    replenishList[index]['finished'] == 0 ? Text(''):
+                    Positioned(
+                      top: 110,
+                      left: 270,
+                      child: Transform(
+                        alignment: Alignment.topRight,
+                        transform: new Matrix4.skewY(-0.3),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(width: 5, style: BorderStyle.solid, color: Colors.grey[300]),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Column(
+                            children: <Widget>[
+                              Text('Finished'),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Column(
-                    children: <Widget>[
-                      ListTile(
-                        leading: replenishList[index]['finished'] ?
-                        Icon(Icons.turned_in, color: replenishList[index]['finished'] ? _uselessColor : _usefulColor,) :
-                        Icon(Icons.turned_in_not, color: replenishList[index]['finished'] ? _uselessColor : _usefulColor),
-                        title: Text(replenishList[index]['name'].toUpperCase(),
-                          style: TextStyle(fontSize: 20, color:
-                          replenishList[index]['finished'] ? _uselessColor : _usefulColor),),
-                        subtitle: Text('--' + replenishList[index]['model'],) ,
-                        trailing: Text('￥' + replenishList[index]['num'].toString()),
-                      ),
-                      Divider(indent: 0,),
-                      ListTile(
-                        title: Row(
-                          children: <Widget>[
-                            Text(replenishList[index]['time'], ),
-                          ],
+                    Column(
+                      children: <Widget>[
+                        ListTile(
+                          leading: replenishList[index]['finished'] == 1 ?
+                            Icon(Icons.turned_in, color: replenishList[index]['finished'] == 1? _uselessColor : _usefulColor,) :
+                            Icon(Icons.turned_in_not, color: replenishList[index]['finished'] == 1 ? _uselessColor : _usefulColor),
+                          //),
+                          title: Text(replenishList[index]['name'].toUpperCase(),
+                            style: TextStyle(fontSize: 20, color:
+                            replenishList[index]['finished'] == 1 ? _uselessColor : _usefulColor),),
+                          subtitle: Text('--' + replenishList[index]['model'],) ,
+                          trailing: Text('￥' + replenishList[index]['num'].toString()),
                         ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Row(
-                              children: <Widget>[
-                                Icon(Icons.fiber_manual_record, color: Colors.grey[500], size: 13,),
-                                Text('Count:  ' + replenishList[index]['num'].toString()),
-                              ],
-                            ),
-                            Row(
-                              children: <Widget>[
-                                Icon(Icons.fiber_manual_record, color: Colors.grey[500], size: 13,),
-                                Text('State:    ' + (replenishList[index]['finished'] ? 'finished' : 'replenishing')),
-                              ],
-                            ),
-                          ],
+                        Divider(indent: 0,),
+                        ListTile(
+                          title: Row(
+                            children: <Widget>[
+                              Text(replenishList[index]['time'], ),
+                            ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Row(
+                                children: <Widget>[
+                                  Icon(Icons.fiber_manual_record, color: Colors.grey[500], size: 13,),
+                                  Text('Count:  ' + replenishList[index]['num'].toString()),
+                                ],
+                              ),
+                              Row(
+                                children: <Widget>[
+                                  Icon(Icons.fiber_manual_record, color: Colors.grey[500], size: 13,),
+                                  Text('State:    ' + (replenishList[index]['finished'] == 1 ? 'finished' : 'replenishing')),
+                                ],
+                              ),
+                            ],
+                          ),
+                          contentPadding: EdgeInsets.fromLTRB(20, 10, 10, 20),
                         ),
-                        contentPadding: EdgeInsets.fromLTRB(20, 10, 10, 20),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       }
@@ -160,7 +182,7 @@ class _PageRecordState extends State<_PageRecord>{
         child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,
-        children: replenishList != null ? _replenishWidgetList : <Widget>[
+        children: replenishList != null && replenishList.length != 0 ? _replenishWidgetList : <Widget>[
           Column(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -195,17 +217,30 @@ class _PageAddState extends State<_PageAdd>{
   int _count;
   double _price;
 
-  _submitForm () {
+  _submitForm () async{
     if ((_fomrKey.currentState as FormState).validate()){
-      /*await _alert();
-      //if (_shouldAdd) {*/
-        _name = _nameCtrl.text;
-        _model = _modelCtrl.text;
-        _count = int.parse(_numCtrl.text);
-        _price = double.parse(_priceCtrl.text);
-        //sql
-        alert(context, 'Add successfully !');
-      //}
+      _name = _nameCtrl.text;
+      _model = _modelCtrl.text;
+      _count = int.parse(_numCtrl.text);
+      _price = double.parse(_priceCtrl.text);
+
+      if (_time != null){
+        var _tmpReplenish = await dbManager.query('replenish', 'name = \'$_name\' AND '
+            'model = \'$_model\' AND time = \'$_time\'');
+        var _tmpGoods = await dbManager.query('goods', 'name = \'$_name\' AND model = \'$_model\'');
+
+        if (_tmpReplenish.length != 0 || _tmpGoods.length == 0){ //如果销售记录已存在或不存在该商品，报错
+          alert(context, 'Add failed!');
+        } else { //如果销售记录不存在，添加
+          if (dbAddReplenish(_name, _model, _count, _price, _time) != null) {
+            alert(context, 'Add successfully !');
+          } else {
+            alert(context, 'Add failed!');
+          }
+        }
+      } else{
+        alert(context, 'Please select time!');
+      }
     }
   }
   _alert(){
@@ -309,18 +344,16 @@ class _PageAddState extends State<_PageAdd>{
                   FlatButton(
                     padding: EdgeInsets.all(0),
                     onPressed:() {
-                      setState(() {
                         showDatePicker(context: context,
                             initialDate: DateTime.now(),
                             firstDate: DateTime(DateTime.now().year - 5),
                             lastDate: DateTime(DateTime.now().year + 5)
-                        ).then<void>((DateTime value){
+                        ).then<void>((DateTime value) {
                           _time = value.year.toString() + '-' +
                               value.month.toString() + '-' +
                               value.day.toString();
+                          setState(() {});
                         });
-                        print(_time);
-                      });
                     },
                     child: TextFormField(
                       controller: _timeCtrl,

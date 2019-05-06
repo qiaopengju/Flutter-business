@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'theme.dart';
+import 'database.dart';
+
+int _dateDealTimes;
+int _date, _month, _year;
+double _dateFinance, _monthIncome, _monthExpend, _yearIncome, _yearExpend;
 
 class Finance extends StatefulWidget{
   @override
@@ -33,7 +38,6 @@ class _FinanceState extends State<Finance>{
   }
 }
 
-int _date, _month, _year;
 class _PageBody extends StatefulWidget{
   @override
   _PageBodyState createState() => new _PageBodyState();
@@ -41,25 +45,38 @@ class _PageBody extends StatefulWidget{
 
 class _PageBodyState extends State<_PageBody>{
   Widget dayFinanceWidget, monthFinanceWidget, yearFinanceWidget;
-  int _dateDealTimes;
-  double _dateFinance, _monthIncome, _monthExpend,_yearIncome, _yearExpend;
   final List<int> _monthDateEnum = List<int>.generate(31,
     (index){
       return index + 1;
     }
   );
 
-  _initialFinance(int date, int month, int year){
+  _PageBodyState() {
+    _initialFinance(DateTime.now().day, DateTime.now().month, DateTime.now().year);
+  }
+
+
+  _initialFinance(int date, int month, int year) async{
     _date = date;
     _month = month;
     _year = year;
-    _dateDealTimes = 0;
-    _dateFinance = 0;
-    _monthIncome = 0;
-    _monthExpend = 0;
-    _yearIncome = 0;
-    _yearExpend = 0;
 
+    await dbGetFinanceData(_date, _month, _year);
+    print(financeMap);
+
+    _dateDealTimes = financeMap['dateDealTimes'];
+    _dateFinance = financeMap['dateFinance'];
+    _monthIncome = financeMap['monthIncome'];
+    _monthExpend = financeMap['monthExpend'];
+    _yearIncome = financeMap['yearIncome'];
+    _yearExpend = financeMap['yearExpend'];
+
+    setState(() {
+      _setWidget();
+    });
+  }
+
+  _setWidget(){
     dayFinanceWidget = new Card(
       margin: EdgeInsets.all(10),
       elevation: 5,
@@ -159,7 +176,7 @@ class _PageBodyState extends State<_PageBody>{
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             ListTile(
-              title: Text('$month月实时账单',
+              title: Text('$_month月实时账单',
                 style: TextStyle(fontSize: 18, color: Colors.blue),
                 textAlign: TextAlign.left,),
               leading: Icon(Icons.format_list_numbered, color: Colors.blue,),
@@ -223,9 +240,9 @@ class _PageBodyState extends State<_PageBody>{
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
-                  Text('查看详情',
+                  /*Text('查看详情',
                     style: TextStyle(color: Colors.lightBlue[600]),),
-                  Icon(Icons.call_missed_outgoing, color: Colors.lightBlue[600],)
+                  Icon(Icons.call_missed_outgoing, color: Colors.lightBlue[600],)*/
                 ],
               ),
             ),
@@ -242,7 +259,7 @@ class _PageBodyState extends State<_PageBody>{
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             ListTile(
-              title: Text('$year年账单',
+              title: Text('$_year年账单',
                 style: TextStyle(fontSize: 18, color: Colors.blue),
                 textAlign: TextAlign.left,),
               leading: Icon(Icons.show_chart, color: Colors.blue,),
@@ -305,9 +322,9 @@ class _PageBodyState extends State<_PageBody>{
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
-                  Text('查看详情',
+                  /*Text('查看详情',
                     style: TextStyle(color: Colors.lightBlue[600]),),
-                  Icon(Icons.call_missed_outgoing, color: Colors.lightBlue[600],)
+                  Icon(Icons.call_missed_outgoing, color: Colors.lightBlue[600],)*/
                 ],
               ),
             ),
@@ -315,16 +332,6 @@ class _PageBodyState extends State<_PageBody>{
         ),
       ),
     );
-  }
-  _setDate(int date){
-  }
-  _setMonth(int month){
-  }
-  _setYear(int year){
-  }
-
-  _PageBodyState(){
-    _initialFinance(1, 5, 2019);
   }
 
   @override

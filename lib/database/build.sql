@@ -28,3 +28,10 @@ create table storehouse(
 	num interger,
 	primary key(name, model),
 	foreign key(name, model) references goods(name, model));
+
+create table setting(
+    single interger,
+    darkTheme bool,
+    alertNum interger,
+	primary key(darkTheme),
+);

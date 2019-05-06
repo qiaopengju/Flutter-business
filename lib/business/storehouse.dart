@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'theme.dart';
 import 'database.dart';
+import 'function.dart';
+
+String _searchText, _lastSearchText;
 
 class Storehouse extends StatefulWidget{
   @override
@@ -24,6 +27,23 @@ class _StorehouseState extends State<Storehouse>{
             color: mainTheme.barText,
           ),
         ),
+        actions: <Widget>[
+          IconButton(
+            tooltip: 'Search',
+            icon: const Icon(Icons.search),
+            onPressed: () async {
+              _searchText = await showSearch<String>(
+                context: context,
+                delegate: SearchStringDelegate(),
+              );
+              if (_searchText != null && _searchText != _lastSearchText) {
+                setState(() {
+                  _lastSearchText = _searchText;
+                });
+              }
+            },
+          ),
+        ],
         //centerTitle: true,
         backgroundColor: mainTheme.primarySwatch,
         elevation: 0,
@@ -42,10 +62,20 @@ class _PageBody extends StatefulWidget{
 class _PageBodyState extends State<_PageBody>{
   List<Widget> _goodsStoreList;
 
-  _getGoodsStore(){
-    goodsStore = [{'name': 'kkyou', 'model': 180, 'num': 12},
-      {'name': 'simone', 'model': 160, 'num': 10},
-    ];
+  _getGoodsStore() async{
+    _setWidget();
+    if (_searchText == null) {
+      await dbGetGoodsStore();
+    }else{
+      await dbGetGoodsStore(_searchText);
+    }
+
+    setState(() {
+      _setWidget();
+    });
+  }
+
+  _setWidget(){
     _goodsStoreList = goodsStore == null ? null : new List<Widget>.generate(goodsStore.length,
       (index){
         return Card(
@@ -82,7 +112,7 @@ class _PageBodyState extends State<_PageBody>{
       child: ListView(
         /*mainAxisAlignment: MainAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,*/
-        children: goodsStore != null ? _goodsStoreList :
+        children: goodsStore != null && goodsStore.length != 0 ? _goodsStoreList :
         <Widget> [
           Column(
             mainAxisSize: MainAxisSize.max,
@@ -90,7 +120,7 @@ class _PageBodyState extends State<_PageBody>{
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               Icon(Icons.toc, size: 100, color: Colors.grey[200],),
-              Text('null', style: TextStyle(color: Colors.grey[200], fontSize: 25),)
+              Text('null', style: TextStyle(color: Colors.grey[200], fontSize: 25),),
             ],
           )
         ],

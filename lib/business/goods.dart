@@ -5,6 +5,8 @@ import 'theme.dart';
 import 'database.dart';
 import 'function.dart';
 
+String _searchText, _lastSearchText;
+
 class Goods extends StatefulWidget{
   @override
   _GoodsState createState() => new _GoodsState();
@@ -118,8 +120,16 @@ class _AddGoodsBodyState extends State<AddGoodsBody>{
         nameNode.unfocus();
         modelNode.unfocus();
         //sql
-        dbAddGoods(goodsName, goodsModel);
-        alert(context, 'Add successfully !');
+        var _tmpGoods = await dbManager.query('goods', 'name = \'$goodsName\' AND model = \'$goodsModel\'');
+        if (_tmpGoods.length != 0){
+          alert(context, 'Add failed!');
+        } else {
+          if (dbAddGoods(goodsName, goodsModel) != null) {
+            alert(context, 'Add successfully !');
+          } else {
+            alert(context, 'Add failed!');
+          }
+        }
       //}
     }
   }
@@ -239,6 +249,23 @@ class _GoodsListState extends State<GoodsList>{
         backgroundColor: Colors.lightBlue[900],
         title: Text('Goods List',
           style: TextStyle(fontSize: 18),),
+        actions: <Widget>[
+          IconButton(
+            tooltip: 'Search',
+            icon: const Icon(Icons.search),
+            onPressed: () async {
+              _searchText = await showSearch<String>(
+                context: context,
+                delegate: SearchStringDelegate(),
+              );
+              if (_searchText != null && _searchText != _lastSearchText) {
+                setState(() {
+                  _lastSearchText = _searchText;
+                });
+              }
+            },
+          ),
+        ],
         elevation: 5.0,
         leading: IconButton(icon: Icon(Icons.arrow_back),
             onPressed: (){Navigator.pop(context);}),
@@ -248,14 +275,28 @@ class _GoodsListState extends State<GoodsList>{
   }
 }
 
-class GoodsListBody extends StatelessWidget{
+class GoodsListBody extends StatefulWidget{
+  @override
+  GoodsListBodyState createState() => GoodsListBodyState();
+}
+
+class GoodsListBodyState extends State<GoodsListBody>{
   List<Widget> _listWidget;
 
-  _getGoodsList(){
-    goodsList = [{'name': 'shoes', 'model': 180},
-    ];
-    //dbGetGoodsList();
+  _getGoodsList() async{
+    _setWidget();
 
+    if (_searchText == null) {
+      await dbGetGoodsList();
+    } else{
+      await dbGetGoodsList(_searchText);
+    }
+    setState(() {
+      _setWidget();
+    });
+  }
+
+  _setWidget() {
     _listWidget = goodsList == null ? null : new List<Widget>.generate(goodsList.length,
       (int index){
         return Card(
@@ -285,7 +326,7 @@ class GoodsListBody extends StatelessWidget{
         //color: mainTheme.pageColor,
       ),
       child: ListView(
-        children: goodsList != null ? _listWidget:
+        children: goodsList != null && goodsList.length != 0 ? _listWidget:
         <Widget> [
           Column(
             mainAxisSize: MainAxisSize.max,

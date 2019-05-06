@@ -7,6 +7,7 @@ import 'business/sell.dart';
 import 'business/storehouse.dart';
 import 'business/goods.dart';
 import 'business/finance.dart';
+import 'business/database.dart';
 import 'business/function.dart';
 
 final Map<String, WidgetBuilder> routeManager = {
@@ -21,7 +22,18 @@ final Map<String, WidgetBuilder> routeManager = {
 };
 GlobalKey<ScaffoldState> _mainScaffoldKey = new GlobalKey();
 
-void main(){
+void main() async{
+  await dbGetGoodsList();
+  await dbGetReplenishList();
+  await dbGetSellList();
+  await dbGetGoodsStore();
+  await dbGetSetting();
+  await dbGetStoreAlerm();
+  mainTheme = darkTheme ?  new MainTheme.set(ThemeColor.black) :
+    new MainTheme.set(ThemeColor.blue);
+
+  //await dbGetFinanceData(DateTime.now().day, DateTime.now().month, DateTime.now().year);
+
   runApp(Business());
 }
 
@@ -46,13 +58,45 @@ class HomePage extends StatefulWidget{
   _HomePageState createState() => new _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>{
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin{
+  Animation<double> animation;
+  AnimationController controller;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    controller = new AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 3000));
+    animation = new Tween(begin: 0.0, end: 255.0).animate(controller)
+      ..addListener((){
+        setState(() {});
+      });
+    controller.forward();
+
+    animation.addStatusListener((status) {
+      if (status == AnimationStatus.completed){
+        controller.reverse();
+      } else if (status == AnimationStatus.dismissed){
+        controller.forward();
+      }
+    });
+  }
+
   Widget build(BuildContext context) {
     // TODO: implement build
     return Scaffold(
       key: _mainScaffoldKey,
       appBar: new AppBar(
-        leading: Icon(Icons.donut_large, color: mainTheme.barText, size: 35,),
+        leading: IconButton(icon: Icon(Icons.donut_large,
+          color: alertList.length == 0 ? mainTheme.barText :
+            Color.fromARGB(255, 255, animation.value.floor(), animation.value.floor()), size: 35,),
+          onPressed: (){
+            if (alertList.length != 0){
+              alert(context, 'Inventory shortage !');
+            }
+          },
+        ),
         title: new Text('Business',
           style: TextStyle(
             color: mainTheme.barText,
@@ -70,7 +114,7 @@ class _HomePageState extends State<HomePage>{
         elevation: 0,
       ),
       drawer: GestureDetector(
-        onTap: (){
+        onTapCancel: () {
           setState(() {
             themeButtonPressed();
           });
@@ -85,9 +129,9 @@ class _HomePageState extends State<HomePage>{
 
   themeButtonPressed(){
     setState(() {
-      //mainTheme.themeData = mainTheme.themeData == ThemeColor.blue ? ThemeColor.black : ThemeColor.blue;
       mainTheme.themeData = darkTheme ? ThemeColor.black : ThemeColor.blue;
       mainTheme.setThemeColor();
+      dbSetTheme(darkTheme);
     });
   }
 }
@@ -180,7 +224,7 @@ class _MainDrawer extends StatefulWidget{
   _MainDrawerState createState() => _MainDrawerState();
 }
 
-class _MainDrawerState extends State<_MainDrawer>{
+class _MainDrawerState extends State<_MainDrawer> {
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -194,9 +238,21 @@ class _MainDrawerState extends State<_MainDrawer>{
           child: Column(
             children: <Widget>[
               ListTile(
-                title: Text('Dark theme:', style: TextStyle(fontSize: 16.5, color: Colors.grey[600]),),
+                title: Text('Dark theme :', style: TextStyle(fontSize: 16.5, color: Colors.grey[600]),),
                 trailing: Switch(value: darkTheme, onChanged: (v){
                   darkTheme = v;
+                }),
+              ),
+              Divider(color: Colors.grey[500],),
+              ListTile(
+                title: Text('Storage alerm num:', style: TextStyle(fontSize: 16.5, color: Colors.grey[600]),),
+                trailing: Text('$alertNum'),
+                subtitle: Slider(min: 5.0, max: 100.0, value: alertNum.roundToDouble(), onChanged: (v){
+                  setState(() {
+                    alertNum = v.floor();
+                  });
+                  dbSetAlertNum(alertNum);
+                  dbGetStoreAlerm();
                 }),
               ),
               Divider(color: Colors.grey[500],),

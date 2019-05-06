@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 enum ThemeColor{white, black, blue}
-MainTheme mainTheme = new MainTheme.set(ThemeColor.blue);
+MainTheme mainTheme;
 
 class MainTheme{
   MainTheme(){
