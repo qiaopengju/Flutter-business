@@ -7,6 +7,7 @@ import 'database.dart';
 import 'function.dart';
 
 String _searchText, _lastSearchText; //搜索信息
+enum _Operation {delete, cancel}
 
 class Goods extends StatefulWidget{
   @override
@@ -235,6 +236,7 @@ class _AddGoodsBodyState extends State<AddGoodsBody>{
   }
 }
 
+/*=============goods list================*/
 class GoodsList extends StatefulWidget{ //表单列表
   @override
   _GoodsListState createState() => new _GoodsListState();
@@ -308,7 +310,24 @@ class GoodsListBodyState extends State<GoodsListBody>{
                   style: TextStyle(fontSize: 20.0),
                 ),
                 subtitle: Text('Model:' + goodsList[index]['model'].toString()),
-                leading: Icon(Icons.format_list_bulleted, color: Colors.blue,),
+                /*leading: IconButton(
+                    icon: Icon(Icons.format_list_bulleted, color: Colors.blue,),
+                ),*/
+                leading: PopupMenuButton<_Operation>( itemBuilder: (BuildContext context) => <PopupMenuEntry<_Operation>>[
+                  const PopupMenuItem(child: Text("Delete"),
+                    value: _Operation.delete,
+                  ),
+                  const PopupMenuItem(child: Text("Cancel"),
+                    value: _Operation.cancel,
+                  ),
+                ],
+                  onSelected: (_Operation result) async{
+                    if (result == _Operation.delete){
+                      await dbDelGoods(goodsList[index]['name'], goodsList[index]['model']);
+                    }
+                    setState(() {});
+                  },
+                ),
               ),
               new Divider(),
             ],

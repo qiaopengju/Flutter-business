@@ -134,6 +134,10 @@ dbAddGoods(String _name, String _model) async{  //添加商品
   return await dbManager.insertDb('goods', {'name': _name, 'model': _model});
 }
 
+dbDelGoods(String _name, String _model) async{  //删除商品
+  return await dbManager.delete('goods', 'name = \'$_name\' AND model = \'$_model\'');
+}
+
 dbAddReplenish(String _name, String _model, int _num, double _price, //添加进货记录
     String _time) async{
   return await dbManager.insertDb('replenish', {'name': _name, 'model': _model,
